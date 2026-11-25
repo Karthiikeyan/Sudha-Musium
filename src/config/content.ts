@@ -135,7 +135,7 @@ export const content = {
     screenDone: 'Forever friends 🤝💖',
     screenHello: 'Happy Birthday Sudha! 🎂',
     screenTap: 'tap to open',
-    afterQuiz: ['Okay… one last thing. Come to the cake 🎂'],
+    afterQuiz: ['Forever friends, officially 🤝 The door is open now 🚪'],
   },
 
   finale: {
@@ -164,6 +164,159 @@ export const content = {
     signOff: '— Karthik',
     close: 'Close',
     replay: 'Replay museum',
+  },
+
+  /* ─────────────────────────── the journey (rooms) ─────────────────────────── */
+  journey: {
+    continueJourney: 'Continue my journey',
+    startOver: 'Start over',
+    map: 'Map',
+    mapTitle: 'Your journey',
+    hint: 'Hint',
+    memories: 'Memories',
+    doorOpen: 'Open door →',
+    doorLocked: 'Locked 🔒',
+    starFound: 'You found a star! ⭐',
+    allStars: 'All the stars! You really looked everywhere 🌟',
+  },
+
+  roomNames: {
+    lobby: 'The Ticket Gate',
+    hall: 'Memory Lane',
+    cinema: 'The Movie of Us',
+    lounge: 'The Lounge',
+    'post-office': 'The Post Office',
+    rooftop: 'The Rooftop',
+  },
+
+  /** What Karthik says the first time she walks into each room. */
+  roomIntros: {
+    lobby: ['Welcome to the museum! First things first: your ticket 🎟️'],
+    hall: ['Chapter time! Walk slowly, the lights follow you ✨'],
+    cinema: ['Grab a seat, the movie is about to start 🍿'],
+    lounge: ['The lounge! The big screen has a question for you 📺'],
+    'post-office': ['Some mail arrived for you 💌'],
+    rooftop: ['You made it 🥹'],
+  },
+
+  /** Lines for doors. {n} = photos still to see, {rooms} = rooms with a hidden star. */
+  doorLines: {
+    lobby: 'Grab your ticket at the desk first 🎟️',
+    hall: 'See a few more memories first 👀 ({n} to go)',
+    cinema: 'The movie first! Then the door 🍿',
+    lounge: 'The big screen has two questions for you 📺',
+    'post-office': 'Read the big sealed letter first 💌',
+    stars: 'Hmm… I think a star is still hiding in {rooms} 👀',
+    unlocked: "Door's open when you're ready 🚪",
+  },
+
+  ticket: {
+    action: 'Take your ticket 🎟️',
+    again: 'See your ticket 🎟️',
+    admit: 'ADMIT ONE',
+    museum: "Sudha's Museum",
+    gate: 'GATE 23',
+    seat: 'SEAT: FOREVER',
+    note: 'Valid for one (1) birthday. Non-refundable. Friendship included.',
+    close: 'Keep it 💛',
+  },
+
+  cinema: {
+    sit: 'Sit together 🍿',
+    play: 'Play ▶',
+    skip: 'Skip ⏭',
+    standUp: 'Stand up',
+    titleStart: 'The Movie of Us',
+    titleEnd: 'The End… or is it? 🎬',
+    whispers: ['this one 😂', 'okay this is a classic', 'look at that 🥹', 'director’s cut, obviously', 'iconic.'],
+    afterLine: 'Best movie ever made. Door’s open 🚪',
+  },
+
+  arcade: {
+    action: 'Play the Friendship Quiz 🕹️',
+    title: 'Friendship Quiz',
+    intro: 'Three questions about Karthik. No pressure. (There is no wrong answer. Literally.)',
+    start: 'Start',
+    next: 'Next',
+    close: 'Close',
+    result: 'Friendship level: 100% 🏆',
+    resultSub: 'Certified best friend. The arcade has spoken.',
+    questions: [
+      {
+        q: "What is Karthik's most-used emoji?",
+        options: [
+          { text: '😂', reply: 'Correct. He laughs at his own jokes first.' },
+          { text: '🥹', reply: 'Also correct. He is a softie, apparently.' },
+          { text: '😌', reply: 'Yes. Peak "I planned this" energy.' },
+        ],
+      },
+      {
+        q: 'If Karthik were a snack, he would be…',
+        options: [
+          { text: 'Popcorn 🍿', reply: 'Light, a bit noisy, great at the movies. Accurate.' },
+          { text: 'Chocolate 🍫', reply: 'Sweet. Melts under pressure. Very accurate.' },
+          { text: 'Samosa 🥟', reply: 'Crunchy outside, soft inside. Wow, you know him.' },
+        ],
+      },
+      {
+        q: 'What does Karthik do when he is late?',
+        options: [
+          { text: '"5 more minutes" 🏃', reply: 'It was never 5 minutes. You know it.' },
+          { text: 'Brings a peace offering 🍰', reply: 'Smart guess. Cake fixes everything.' },
+          { text: 'Builds a museum 🏛️', reply: 'Okay, this one is suspiciously specific 😂' },
+        ],
+      },
+    ],
+    champion: 'Quiz champion 🏆',
+  },
+
+  // TODO(Karthik): replace these three little notes with your own words.
+  openWhen: [
+    {
+      label: "Open when you're sad 🌧️",
+      title: 'For a grey day',
+      body: "Hey you. If today is heavy, that's okay. You don't have to fix everything right now. Drink some water, eat something nice, and text me something random. I'll reply with something even more random. Rain always stops. You always come back stronger.",
+    },
+    {
+      label: 'Open when you need a laugh 😂',
+      title: 'Emergency laugh kit',
+      body: 'Imagine me trying to dance at your birthday. Now imagine me trying to dance AND hold cake. Now imagine the cake winning. That is the energy I bring to this friendship. You are welcome. Also: the parrot photo. Go look at it again.',
+    },
+    {
+      label: 'Open when you doubt yourself 💪',
+      title: 'A tiny reminder',
+      body: "You are smarter, kinder and braver than that little voice says. I've watched you figure out hard things again and again. The people who know you think you're amazing, and we have evidence. Exhibit A: this entire museum.",
+    },
+  ],
+
+  sealed: {
+    action: 'Open the big envelope 💌',
+    locked: 'Read the three little envelopes first 😌',
+    seal: 'Happy Birthday',
+    tapToBreak: 'Tap the seal to open',
+  },
+  notes: {
+    open: 'Open',
+    close: 'Close',
+  },
+
+  wishTree: {
+    action: 'Make a wish on the tree 🏮',
+    title: 'The Wish Tree',
+    prompt: 'Write a little wish (or leave it secret) and hang it on the tree.',
+    placeholder: 'My wish is…',
+    hang: 'Hang it 🏮',
+    cancel: 'Not now',
+    private: 'Nothing is saved or sent anywhere. It only glows here, tonight.',
+    thanks: 'Hung on the tree ✨',
+  },
+
+  closing: {
+    title: 'Thanks for visiting, Sudha 💛',
+    sign: '— Karthik',
+    recap: '⭐ {stars}/{total} stars found · {photos} memories seen',
+    wander: 'Wander the museum',
+    replay: 'Replay the journey',
   },
 
   fallback: {

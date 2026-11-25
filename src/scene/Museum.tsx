@@ -1,24 +1,15 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import { isTouch } from '../lib/device'
+import { setPhotoAnisotropy } from '../lib/photoCache'
 import { setAnisotropy } from '../lib/textures'
 import { world } from '../lib/world'
 import { useStore } from '../state/store'
-import { Bench } from './Bench'
 import { CameraRig } from './CameraRig'
-import { Cake } from './Cake'
-import { Celebration } from './Celebration'
 import { Director } from './Director'
 import { Guide } from './Guide'
 import { Player } from './Player'
-import { Floaters } from './Floaters'
-import { buildLayoutKey } from './keys'
-import type { Layout } from './layout'
-import { Lights } from './Lights'
-import { PhotoFrame } from './PhotoFrame'
-import { Plinth } from './Plinth'
-import { Room } from './Room'
-import { WallScreen } from './WallScreen'
+import { RoomView } from './rooms/RoomView'
 
 interface Props {
   onContextLost: () => void
@@ -37,9 +28,11 @@ function ContextGuard({ onLost, onRestored }: { onLost: () => void; onRestored: 
     const restored = () => onRestored()
     el.addEventListener('webglcontextlost', lost)
     el.addEventListener('webglcontextrestored', restored)
+    world.glInfo = () => ({ textures: gl.info.memory.textures, geometries: gl.info.memory.geometries })
     return () => {
       el.removeEventListener('webglcontextlost', lost)
       el.removeEventListener('webglcontextrestored', restored)
+      world.glInfo = null
     }
   }, [gl, onLost, onRestored])
   return null
@@ -48,7 +41,9 @@ function ContextGuard({ onLost, onRestored }: { onLost: () => void; onRestored: 
 function AnisoSetter() {
   const gl = useThree((s) => s.gl)
   useEffect(() => {
-    setAnisotropy(gl.capabilities.getMaxAnisotropy())
+    const max = gl.capabilities.getMaxAnisotropy()
+    setAnisotropy(max)
+    setPhotoAnisotropy(max)
   }, [gl])
   return null
 }
@@ -78,64 +73,39 @@ function PerfWatch() {
   return null
 }
 
-function FloorClick({ layout }: { layout: Layout }) {
-  const { halfW, zN, zS } = layout
+/** Invisible floor plane for tap/click-to-walk. */
+function FloorClick({ w, d }: { w: number; d: number }) {
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, 0.002, (zN + zS) / 2]}
+      position={[0, 0.002, 0]}
       onClick={(e) => {
         const st = useStore.getState()
-        if (st.phase !== 'explore') return
+        if (st.phase !== 'explore' || st.transition) return
         e.stopPropagation()
         world.walkTarget = { x: e.point.x, z: e.point.z }
         world.walkTargetAge = 0
         st.cancelPending()
       }}
     >
-      <planeGeometry args={[halfW * 2, zS - zN]} />
+      <planeGeometry args={[w, d]} />
       <meshBasicMaterial visible={false} />
     </mesh>
   )
 }
 
 function Scene() {
-  const layout = useStore((s) => s.layout)
-  const photos = useStore((s) => s.photos)
-  if (!layout) return null
+  const room = useStore((s) => s.room())
+  if (!room) return null
   return (
-    <group key={buildLayoutKey(layout)}>
-      <Lights />
-      <Room layout={layout} />
-      {layout.frames.map((f) => (
-        <PhotoFrame
-          key={f.index}
-          placement={f}
-          aspect={photos[f.index]?.aspect ?? 1}
-          interactable={layout.interactables.find((i) => i.id === 'photo-' + f.index)}
-        />
-      ))}
-      {layout.benches.map((b) => (
-        <Bench key={b.id} bench={b} layout={layout} />
-      ))}
-      <Plinth
-        x={layout.plinth.x}
-        z={layout.plinth.z}
-        w={layout.plinth.w}
-        d={layout.plinth.d}
-        h={layout.plinth.h}
-        plaque={{ small: 'For', big: 'Sudha' }}
-      />
-      <WallScreen layout={layout} />
-      <Cake layout={layout} />
-      <Celebration layout={layout} />
-      <Floaters layout={layout} />
-      <FloorClick layout={layout} />
-      <Director layout={layout} />
-      <Player layout={layout} />
-      <Guide layout={layout} />
-      <CameraRig layout={layout} />
-    </group>
+    <>
+      <RoomView key={room.id} room={room} />
+      <FloorClick key={'floor-' + room.id} w={room.layout.w} d={room.layout.d} />
+      <Director />
+      <Player />
+      <Guide />
+      <CameraRig />
+    </>
   )
 }
 
@@ -147,11 +117,8 @@ export function Museum({ onContextLost, onContextRestored }: Props) {
         flat
         dpr={touch ? [1, 1.5] : [1, 2]}
         gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
-        camera={{ fov: 45, near: 0.1, far: 220, position: [3, 6, 20] }}
-        onCreated={({ camera }) => camera.lookAt(3, 1, 10)}
+        camera={{ fov: 45, near: 0.1, far: 240, position: [0, 6, 12] }}
       >
-        <color attach="background" args={['#14141a']} />
-        <fog attach="fog" args={['#ebe7e0', 45, 120]} />
         <ContextGuard onLost={onContextLost} onRestored={onContextRestored} />
         <AnisoSetter />
         <PerfWatch />

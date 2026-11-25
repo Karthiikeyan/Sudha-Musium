@@ -6,7 +6,8 @@ import { bigCelebration } from '../lib/fx'
 import { mulberry32, smoothstep } from '../lib/math'
 import { useStore } from '../state/store'
 import { heartGeometry } from './Floaters'
-import type { Layout } from './layout'
+import { useDisposable } from './hooks'
+import type { P2 } from '../lib/math'
 
 const PASTELS = ['#f7c6d4', '#d9ccf2', '#fbe7a6', '#c9e7f2', '#ffd1b3', '#ffffff', '#ff9fb4']
 
@@ -20,7 +21,7 @@ interface Balloon {
   drift: number
 }
 
-function Balloons({ layout, t0 }: { layout: Layout; t0: React.MutableRefObject<number> }) {
+function Balloons({ center, t0 }: { center: P2; t0: React.MutableRefObject<number> }) {
   const count = isTouch() ? 8 : 14
   const bodies = useRef<THREE.InstancedMesh>(null)
   const strings = useRef<THREE.InstancedMesh>(null)
@@ -28,15 +29,15 @@ function Balloons({ layout, t0 }: { layout: Layout; t0: React.MutableRefObject<n
   const items = useMemo<Balloon[]>(() => {
     const r = mulberry32(7)
     return Array.from({ length: count }, (_, i) => ({
-      x: layout.cake.x + (r() * 2 - 1) * 8,
-      z: layout.cake.z - 2.5 + r() * 3,
+      x: center.x + (r() * 2 - 1) * 8,
+      z: center.z - 2.5 + r() * 3,
       delay: (i / count) * 2.4 + r() * 0.5,
       vy: 0.7 + r() * 0.6,
       top: 4.3 + r() * 1.3,
       phase: r() * Math.PI * 2,
       drift: 0.15 + r() * 0.25,
     }))
-  }, [layout, count])
+  }, [center.x, center.z, count])
 
   useLayoutEffect(() => {
     const m = bodies.current
@@ -100,11 +101,11 @@ interface Petal {
   s: number
 }
 
-function Falling({ layout, t0, kind, count }: { layout: Layout; t0: React.MutableRefObject<number>; kind: 'petal' | 'heart'; count: number }) {
+function Falling({ center, t0, kind, count }: { center: P2; t0: React.MutableRefObject<number>; kind: 'petal' | 'heart'; count: number }) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const camera = useThree((s) => s.camera)
-  const geo = useMemo(() => {
+  const geo = useDisposable(() => {
     if (kind === 'heart') return heartGeometry(0.24)
     const g = new THREE.CircleGeometry(0.08, 10)
     g.scale(1, 1.7, 1)
@@ -113,8 +114,8 @@ function Falling({ layout, t0, kind, count }: { layout: Layout; t0: React.Mutabl
   const items = useMemo<Petal[]>(() => {
     const r = mulberry32(kind === 'heart' ? 91 : 53)
     return Array.from({ length: count }, () => ({
-      x: layout.cake.x + (r() * 2 - 1) * 9,
-      z: layout.cake.z - 3 + r() * 9,
+      x: center.x + (r() * 2 - 1) * 9,
+      z: center.z - 3 + r() * 9,
       y0: r() * 6,
       vy: 0.5 + r() * 0.7,
       phase: r() * Math.PI * 2,
@@ -122,7 +123,7 @@ function Falling({ layout, t0, kind, count }: { layout: Layout; t0: React.Mutabl
       spin: 1 + r() * 2,
       s: 0.7 + r() * 0.8,
     }))
-  }, [layout, count, kind])
+  }, [center.x, center.z, count, kind])
 
   useLayoutEffect(() => {
     const m = ref.current
@@ -170,9 +171,9 @@ function Falling({ layout, t0, kind, count }: { layout: Layout; t0: React.Mutabl
 }
 
 /** Balloons + falling petals/hearts + DOM confetti. Mounted only while celebrating (or reading the letter). */
-export function Celebration({ layout }: { layout: Layout }) {
+export function Celebration({ center }: { center: P2 }) {
   const phase = useStore((s) => s.phase)
-  const on = phase === 'celebration' || phase === 'letter'
+  const on = phase === 'celebration' || phase === 'finale'
   const clock = useThree((s) => s.clock)
   const t0 = useRef(0)
   const started = useRef(false)
@@ -193,9 +194,9 @@ export function Celebration({ layout }: { layout: Layout }) {
   const touch = isTouch()
   return (
     <>
-      <Balloons layout={layout} t0={t0} />
-      <Falling layout={layout} t0={t0} kind="petal" count={touch ? 34 : 80} />
-      <Falling layout={layout} t0={t0} kind="heart" count={touch ? 16 : 40} />
+      <Balloons center={center} t0={t0} />
+      <Falling center={center} t0={t0} kind="petal" count={touch ? 34 : 80} />
+      <Falling center={center} t0={t0} kind="heart" count={touch ? 16 : 40} />
     </>
   )
 }

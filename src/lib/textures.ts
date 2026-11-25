@@ -1,21 +1,10 @@
 import * as THREE from 'three'
 
-export interface LoadedPhoto {
-  name: string
-  url: string
-  aspect: number
-  placeholder: boolean
-  texture: THREE.CanvasTexture
-}
-
-let photoTextures: THREE.CanvasTexture[] = []
 const cache = new Map<string, THREE.CanvasTexture>()
-
-export const getPhotoTexture = (i: number): THREE.CanvasTexture | undefined => photoTextures[i]
 
 export const photoUrl = (name: string) => '/images/' + encodeURIComponent(name)
 
-function makeCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
+export function makeCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement('canvas')
   c.width = w
   c.height = h
@@ -86,7 +75,7 @@ export function makePlaceholder(index: number): { texture: THREE.CanvasTexture; 
   return { texture: textureFromCanvas(c), aspect }
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
+export function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.decoding = 'async'
@@ -97,7 +86,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 /** Draws the image downscaled (stepwise, for quality) so its longest side is <= maxSide. */
-function downscale(img: HTMLImageElement, maxSide: number): { canvas: HTMLCanvasElement; aspect: number } {
+export function downscale(img: HTMLImageElement, maxSide: number): { canvas: HTMLCanvasElement; aspect: number } {
   const w = img.naturalWidth
   const h = img.naturalHeight
   if (!w || !h) throw new Error('empty image')
@@ -123,80 +112,14 @@ function downscale(img: HTMLImageElement, maxSide: number): { canvas: HTMLCanvas
   return { canvas: out, aspect: w / h }
 }
 
-/**
- * Loads (and downsizes) every photo. A photo that fails becomes a placeholder.
- * With an empty list, 12 placeholder frames are produced. Progress is reported as done/total.
- */
-export async function loadPhotos(
-  names: string[],
-  touch: boolean,
-  onProgress: (done: number, total: number) => void,
-  isCancelled: () => boolean,
-): Promise<LoadedPhoto[]> {
-  const total = names.length === 0 ? 12 : names.length
-  const maxSide = touch ? (names.length > 16 ? 800 : 1024) : 1280
-  const results: LoadedPhoto[] = new Array(total)
-  let done = 0
-
-  if (names.length === 0) {
-    for (let i = 0; i < total; i++) {
-      const p = makePlaceholder(i)
-      results[i] = { name: `placeholder-${i + 1}`, url: '', aspect: p.aspect, placeholder: true, texture: p.texture }
-      onProgress(++done, total)
-    }
-    if (isCancelled()) results.forEach((r) => r.texture.dispose())
-    else photoTextures = results.map((r) => r.texture)
-    return results
-  }
-
-  let next = 0
-  const worker = async () => {
-    while (next < names.length && !isCancelled()) {
-      const i = next++
-      const name = names[i]
-      const url = photoUrl(name)
-      try {
-        const img = await loadImage(url)
-        const { canvas, aspect } = downscale(img, maxSide)
-        results[i] = { name, url, aspect, placeholder: false, texture: textureFromCanvas(canvas) }
-      } catch {
-        const p = makePlaceholder(i)
-        results[i] = { name, url, aspect: p.aspect, placeholder: true, texture: p.texture }
-      }
-      onProgress(++done, total)
-    }
-  }
-  const workers: Promise<void>[] = []
-  for (let k = 0; k < 3; k++) workers.push(worker())
-  await Promise.allSettled(workers)
-  // fill any hole (only possible when cancelled)
-  for (let i = 0; i < total; i++) {
-    if (!results[i]) {
-      const p = makePlaceholder(i)
-      results[i] = { name: names[i], url: photoUrl(names[i]), aspect: p.aspect, placeholder: true, texture: p.texture }
-    }
-  }
-  if (isCancelled()) {
-    results.forEach((r) => r.texture.dispose())
-    return results
-  }
-  photoTextures = results.map((r) => r.texture)
-  return results
-}
-
-export function disposePhotoTextures() {
-  photoTextures.forEach((t) => t.dispose())
-  photoTextures = []
+/** Disposes every cached procedural texture (used on full teardown). */
+export function disposeTextureCache() {
   cache.forEach((t) => t.dispose())
   cache.clear()
 }
 
 export function setAnisotropy(max: number) {
   const a = Math.min(4, max)
-  photoTextures.forEach((t) => {
-    t.anisotropy = a
-    t.needsUpdate = true
-  })
   cache.forEach((t, k) => {
     if (k.startsWith('floor') || k.startsWith('ceil')) {
       t.anisotropy = a
@@ -359,5 +282,49 @@ export function ribbonTexture(text: string): THREE.CanvasTexture {
     ctx.shadowBlur = 6
     ctx.fillText(text, 512, 100)
     return textureFromCanvas(c)
+  })
+}
+
+export type FloorKind = 'tile' | 'wood' | 'carpet' | 'deck' | 'marble'
+
+/** Small tiling floor patterns (cached per kind + colour, so the number stays bounded). */
+export function floorPattern(kind: FloorKind, color: string): THREE.CanvasTexture {
+  return cached(`floor-${kind}-${color}`, () => {
+    const [c, ctx] = makeCanvas(256, 256)
+    ctx.fillStyle = color
+    ctx.fillRect(0, 0, 256, 256)
+    if (kind === 'tile' || kind === 'marble') {
+      ctx.strokeStyle = kind === 'tile' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)'
+      ctx.lineWidth = 3
+      ctx.strokeRect(1.5, 1.5, 125, 125)
+      ctx.strokeRect(129.5, 1.5, 125, 125)
+      ctx.strokeRect(1.5, 129.5, 125, 125)
+      ctx.strokeRect(129.5, 129.5, 125, 125)
+      if (kind === 'marble') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(10, 200)
+        ctx.bezierCurveTo(80, 120, 140, 180, 250, 60)
+        ctx.stroke()
+      }
+    } else if (kind === 'wood' || kind === 'deck') {
+      for (let i = 0; i < 8; i++) {
+        ctx.fillStyle = i % 2 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)'
+        ctx.fillRect(0, i * 32, 256, 32)
+        ctx.fillStyle = 'rgba(0,0,0,0.18)'
+        ctx.fillRect(0, i * 32, 256, 2)
+        ctx.fillRect(((i * 97) % 200) + 20, i * 32, 2, 32)
+      }
+    } else {
+      // carpet: soft speckle
+      for (let i = 0; i < 900; i++) {
+        ctx.fillStyle = i % 2 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
+        ctx.fillRect((i * 73) % 256, (i * 151) % 256, 2, 2)
+      }
+    }
+    const t = textureFromCanvas(c)
+    t.wrapS = t.wrapT = THREE.RepeatWrapping
+    return t
   })
 }

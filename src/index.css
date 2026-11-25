@@ -1002,3 +1002,419 @@ button:focus-visible {
   background: rgba(255, 255, 255, 0.92);
   color: #3a2630;
 }
+
+/* ───────────── journey: room transition ───────────── */
+.room-fade {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #0c0c10;
+  text-align: center;
+  pointer-events: all;
+}
+.room-fade.out {
+  animation: fade-in 0.45s ease both;
+}
+.room-fade.in {
+  animation: fade-out 0.45s ease both;
+}
+.room-fade.out .chapter-card {
+  opacity: 0;
+}
+.chapter-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: chapter-in 0.6s ease both;
+}
+.chapter-label {
+  font: 600 12px/1 var(--sans);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #c9a45c;
+}
+.chapter-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(28px, 7vw, 48px);
+  line-height: 1.1;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.chapter-sub {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(16px, 4.2vw, 20px);
+  color: var(--ink-dim);
+}
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes chapter-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ───────────── journey map ───────────── */
+.map-wrap {
+  position: relative;
+  pointer-events: auto;
+}
+.chip.map-chip {
+  pointer-events: auto;
+  cursor: pointer;
+  min-height: 36px;
+}
+.map-panel {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  width: min(270px, calc(100vw - 24px));
+  max-height: min(70dvh, 460px);
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 252, 246, 0.97);
+  color: var(--paper-ink);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+  animation: card-in 0.3s ease both;
+}
+.map-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  margin: 2px 4px 8px;
+}
+.map-panel ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.map-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+.map-item:not(:disabled):hover {
+  background: rgba(38, 38, 43, 0.06);
+}
+.map-item.current {
+  background: linear-gradient(135deg, #fbe7a6, #f7c6d4);
+}
+.map-item.locked {
+  opacity: 0.45;
+}
+.map-item:disabled {
+  cursor: default;
+}
+.map-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(38, 38, 43, 0.08);
+  font-size: 12px;
+  flex: none;
+}
+.map-name {
+  flex: 1;
+}
+.map-star {
+  font-size: 14px;
+  animation: gift-pulse 2s infinite;
+}
+.map-here {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.65;
+}
+.hint-chip {
+  animation: hint-pulse 2.2s ease-in-out infinite;
+}
+@keyframes hint-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 231, 166, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(251, 231, 166, 0);
+  }
+}
+.link-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  text-decoration: underline;
+  font-size: 14px;
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+/* ───────────── dev panel (?dev=1 only) ───────────── */
+.dev-panel {
+  position: fixed;
+  z-index: 95;
+  right: 8px;
+  bottom: calc(8px + var(--sab));
+  max-width: 240px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #9ef09e;
+  font: 11px/1.3 ui-monospace, monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dev-panel button {
+  appearance: none;
+  border: 1px solid #3a3a3a;
+  background: #1c1c1c;
+  color: #ddd;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font: inherit;
+}
+.dev-panel button.on {
+  background: #2f5f2f;
+}
+.dev-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dev-toggle {
+  align-self: flex-end;
+}
+
+/* ───────────── wax-sealed envelope ───────────── */
+.envelope {
+  position: relative;
+  width: min(420px, 92vw);
+  aspect-ratio: 1.5;
+  animation: card-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.env-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #fff8ea, #f1e0c2);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(150, 120, 70, 0.3) inset;
+  overflow: hidden;
+}
+.env-body::before,
+.env-body::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 60%;
+  height: 70%;
+  background: linear-gradient(160deg, #f6e8cf, #ead6b4);
+}
+.env-body::before {
+  left: 0;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+.env-body::after {
+  right: 0;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+.env-to {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14%;
+  z-index: 2;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 22px;
+  color: #6a5030;
+}
+.env-flap {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 58%;
+  background: linear-gradient(180deg, #fbeed6, #ecd9b6);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: 50% 0;
+  transition: transform 0.7s ease;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.15));
+}
+.envelope.breaking .env-flap {
+  transform: rotateX(180deg);
+}
+.wax-seal {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 58%;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  animation: seal-wiggle 2.4s ease-in-out infinite;
+}
+.wax-seal .half {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at 70% 40%, #d0414f, #8e1c2a 70%);
+  transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.4, 1), opacity 0.7s;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.12);
+}
+.wax-seal .half.l {
+  left: 0;
+  border-radius: 48px 0 0 48px;
+}
+.wax-seal .half.r {
+  right: 0;
+  border-radius: 0 48px 48px 0;
+  background: radial-gradient(circle at 30% 40%, #d0414f, #8e1c2a 70%);
+}
+.seal-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.1;
+  color: #ffd9de;
+  transition: opacity 0.3s;
+}
+.envelope.breaking .wax-seal {
+  animation: none;
+}
+.envelope.breaking .half.l {
+  transform: translate(-30px, 18px) rotate(-35deg);
+  opacity: 0;
+}
+.envelope.breaking .half.r {
+  transform: translate(30px, 18px) rotate(35deg);
+  opacity: 0;
+}
+.envelope.breaking .seal-text {
+  opacity: 0;
+}
+.env-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -40px;
+  text-align: center;
+  color: #fff;
+  font-size: 14px;
+}
+.env-close {
+  position: absolute;
+  right: 0;
+  bottom: -96px;
+  background: rgba(255, 255, 255, 0.85) !important;
+}
+@keyframes seal-wiggle {
+  0%,
+  86%,
+  100% {
+    transform: rotate(0);
+  }
+  90% {
+    transform: rotate(-8deg) scale(1.04);
+  }
+  95% {
+    transform: rotate(8deg) scale(1.04);
+  }
+}
+
+/* ───────────── closing card + room error ───────────── */
+.closing-wrap {
+  position: fixed;
+  z-index: 31;
+  left: 0;
+  right: 0;
+  bottom: calc(18px + var(--sab));
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+}
+.closing-card {
+  width: min(460px, 100%);
+  padding: 18px 20px 20px;
+  border-radius: 20px;
+  background: rgba(255, 252, 246, 0.97);
+  color: var(--paper-ink);
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  animation: card-in 0.6s ease both;
+}
+.closing-card h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(22px, 6vw, 28px);
+  margin: 0;
+}
+.closing-sign {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 17px;
+  margin: 4px 0 8px;
+}
+.closing-recap {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #6a5f66;
+}
+.closing-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.banner-actions.static {
+  position: static;
+  padding: 0;
+}
+.room-error {
+  justify-content: center;
+}

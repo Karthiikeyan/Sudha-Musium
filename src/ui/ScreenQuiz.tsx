@@ -78,9 +78,9 @@ const RAIN = ['💖', '🩷', '💗', '✨', '🌸']
 
 export function ScreenQuiz() {
   const phase = useStore((s) => s.phase)
-  const step = useStore((s) => s.quizStep)
-  const treatYes = useStore((s) => s.treatYes)
-  const friendsYes = useStore((s) => s.friendsYes)
+  const step = useStore((s) => s.progress.quizStep)
+  const treatYes = useStore((s) => s.progress.treatYes)
+  const friendsYes = useStore((s) => s.progress.friendsYes)
   const setQuiz = useStore((s) => s.setQuiz)
   const close = useStore((s) => s.closeScreen)
   const open = phase === 'screen'

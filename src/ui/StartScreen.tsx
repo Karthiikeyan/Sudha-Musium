@@ -5,7 +5,9 @@ import { useStore } from '../state/store'
 
 export function StartScreen() {
   const phase = useStore((s) => s.phase)
-  const beginIntro = useStore((s) => s.beginIntro)
+  const saved = useStore((s) => s.savedProgress)
+  const startNew = useStore((s) => s.startNew)
+  const cont = useStore((s) => s.continueJourney)
   const [gone, setGone] = useState(false)
   const leaving = phase !== 'start'
 
@@ -17,12 +19,13 @@ export function StartScreen() {
 
   if (phase === 'loading' || gone) return null
 
-  const tap = () => {
-    if (phase !== 'start') return
+  const begin = (fn: () => void) => {
+    if (useStore.getState().phase !== 'start') return
     unlockAudio()
     startMusic()
-    beginIntro()
+    fn()
   }
+  const hasSave = !!saved && saved.visited.length > 0
 
   return (
     <div className={'screen' + (leaving ? ' out' : '')} style={{ zIndex: 80 }}>
@@ -33,9 +36,20 @@ export function StartScreen() {
           From <em>{content.subtitleFrom}</em>
           <span className="bar">|</span>To <em>{content.subtitleTo}</em>
         </div>
-        <button className="gift-btn" onClick={tap} autoFocus>
-          {content.startButton}
-        </button>
+        {hasSave ? (
+          <>
+            <button className="gift-btn" onClick={() => begin(cont)} autoFocus>
+              {content.journey.continueJourney} ✨
+            </button>
+            <button className="link-btn" onClick={() => begin(startNew)}>
+              {content.journey.startOver}
+            </button>
+          </>
+        ) : (
+          <button className="gift-btn" onClick={() => begin(startNew)} autoFocus>
+            {content.startButton}
+          </button>
+        )}
         <div className="start-date">
           {content.birthday.day} {content.birthday.month} {content.birthday.year}
         </div>

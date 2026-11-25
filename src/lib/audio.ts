@@ -142,6 +142,12 @@ export function startMusic() {
   }
 }
 
+/** Lower the music while the movie plays (1 = normal). */
+export function duckMusic(level: number) {
+  if (!audio || !musicReady || muted) return
+  fadeTo(MUSIC_VOLUME * Math.max(0, Math.min(1, level)), 700)
+}
+
 export function setMuted(m: boolean) {
   muted = m
   safeStorageSet('museum-muted', m ? '1' : '0')
@@ -173,7 +179,7 @@ function tone(c: AudioContext, freq: number, start: number, dur: number, type: O
   o.stop(start + dur + 0.05)
 }
 
-export type Sfx = 'pop' | 'sparkle' | 'tada' | 'blow'
+export type Sfx = 'pop' | 'sparkle' | 'tada' | 'blow' | 'chime' | 'page' | 'door'
 
 export function sfx(kind: Sfx) {
   if (muted) return
@@ -185,6 +191,15 @@ export function sfx(kind: Sfx) {
       tone(c, 520, t, 0.09, 'sine', 0.12, 900)
     } else if (kind === 'sparkle') {
       ;[1046, 1318, 1568, 2093].forEach((f, i) => tone(c, f, t + i * 0.05, 0.22, 'triangle', 0.07))
+    } else if (kind === 'chime') {
+      tone(c, 1318.5, t, 0.6, 'sine', 0.06)
+      tone(c, 1975.5, t + 0.09, 0.7, 'sine', 0.04)
+    } else if (kind === 'page') {
+      tone(c, 900, t, 0.12, 'triangle', 0.03, 400)
+      tone(c, 700, t + 0.08, 0.14, 'triangle', 0.025, 300)
+    } else if (kind === 'door') {
+      tone(c, 140, t, 0.25, 'sine', 0.12, 70)
+      tone(c, 420, t + 0.05, 0.4, 'triangle', 0.02, 260)
     } else if (kind === 'blow') {
       tone(c, 220, t, 0.4, 'sawtooth', 0.02, 90)
     } else {

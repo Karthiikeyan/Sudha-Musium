@@ -1,6 +1,6 @@
 // Mutable, per-frame world state shared by the scene components (kept outside React/zustand on purpose,
 // so nothing allocates or re-renders while walking around).
-import type { Layout } from '../scene/layout'
+import type { RoomLayout } from '../scene/layout'
 import type { P2 } from './math'
 
 export type Pose = 'idle' | 'walk' | 'sit' | 'wave' | 'dance' | 'hug' | 'cheer'
@@ -46,38 +46,44 @@ const makeActor = (x: number, z: number, yaw: number): Actor => ({
   arrived: true,
 })
 
+export interface GlInfo {
+  textures: number
+  geometries: number
+}
+
 export const world = {
-  player: makeActor(3, 12.5, Math.PI),
-  guide: makeActor(1.4, 10.9, Math.PI / 4),
+  player: makeActor(0, 3, Math.PI),
+  guide: makeActor(-1.5, 4, Math.PI),
   input: { x: 0, z: 0 },
   keys: { up: false, down: false, left: false, right: false },
   walkTarget: null as P2 | null,
   walkTargetAge: 0,
   scripts: { player: null as Script | null, guide: null as Script | null },
-  layout: null as Layout | null,
-  cakeSolid: false,
-  /** seconds since the player last moved (for guide chatter) */
-  time: 0,
+  /** layout of the room currently mounted */
+  layout: null as RoomLayout | null,
+  /** filled by the canvas so the dev panel can read renderer memory */
+  glInfo: null as (() => GlInfo) | null,
 }
 
 let scriptCounter = 1
 export const nextScriptId = () => scriptCounter++
 
-export function resetActors(layout: Layout) {
+/** Put both avatars at the room's spawn points (used on every room change). */
+export function resetActors(layout: RoomLayout) {
   const p = world.player
-  p.x = layout.start.x
-  p.z = layout.start.z
+  p.x = layout.spawn.x
+  p.z = layout.spawn.z
   p.y = 0
-  p.yaw = Math.PI
+  p.yaw = layout.spawn.yaw
   p.pose = 'idle'
   p.speed = 0
   p.scriptId = -1
   p.arrived = true
   const g = world.guide
-  g.x = layout.start.x - 1.6
-  g.z = layout.start.z - 1.6
+  g.x = layout.guideSpawn.x
+  g.z = layout.guideSpawn.z
   g.y = 0
-  g.yaw = Math.PI / 4
+  g.yaw = layout.guideSpawn.yaw
   g.pose = 'idle'
   g.speed = 0
   g.scriptId = -1
@@ -85,4 +91,6 @@ export function resetActors(layout: Layout) {
   world.scripts.player = null
   world.scripts.guide = null
   world.walkTarget = null
+  world.input.x = 0
+  world.input.z = 0
 }

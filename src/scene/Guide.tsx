@@ -1,12 +1,11 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { useRef } from 'react'
 import { content } from '../config/content'
 import { followScript } from '../lib/actors'
 import { clamp, damp, dampAngle, pick, resolveCircle } from '../lib/math'
 import { world } from '../lib/world'
 import { useStore } from '../state/store'
 import { Avatar } from './Avatar'
-import type { Layout } from './layout'
 
 const RADIUS = 0.45
 const GUIDE_SPEED = 4.7
@@ -15,9 +14,7 @@ const OFFSET_X_PORTRAIT = -1.0
 const OFFSET_Z = 1.35
 
 /** Karthik: follows Sudha at a polite distance, faces where he walks, chats now and then. */
-export function Guide({ layout }: { layout: Layout }) {
-  const boxes = useMemo(() => layout.staticBoxes, [layout])
-  const boxesWithCake = useMemo(() => [...layout.staticBoxes, layout.cakeBox], [layout])
+export function Guide() {
   const size = useThree((s) => s.size)
   const sizeRef = useRef(size)
   sizeRef.current = size
@@ -39,7 +36,8 @@ export function Guide({ layout }: { layout: Layout }) {
       return
     }
     const st = useStore.getState()
-    if (st.phase !== 'explore') {
+    const layout = world.layout
+    if (!layout || st.phase !== 'explore' || st.transition) {
       g.speed = damp(g.speed, 0, 12, dt)
       g.pose = 'idle'
       g.y = damp(g.y, 0, 10, dt)
@@ -53,7 +51,7 @@ export function Guide({ layout }: { layout: Layout }) {
     const dx = tx - g.x
     const dz = tz - g.z
     const d = Math.hypot(dx, dz)
-    if (d > 15) {
+    if (d > 12) {
       g.x = tx
       g.z = tz
     }
@@ -73,7 +71,7 @@ export function Guide({ layout }: { layout: Layout }) {
     v.z += (wz - v.z) * k
     g.x += v.x * dt
     g.z += v.z * dt
-    resolveCircle(g, RADIUS, world.cakeSolid ? boxesWithCake : boxes, layout.bounds)
+    resolveCircle(g, RADIUS, layout.boxes, layout.bounds)
 
     const sp = Math.hypot(v.x, v.z)
     g.speed = clamp(sp / GUIDE_SPEED, 0, 1)

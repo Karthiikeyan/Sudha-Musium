@@ -1,19 +1,22 @@
 import { useEffect } from 'react'
 import { content } from '../config/content'
+import { hallSeen, starRooms } from '../journey/progress'
 import { isTouch } from '../lib/device'
 import { useKeyboard } from '../lib/input'
 import { useStore } from '../state/store'
 import { ActionButton } from './ActionButton'
+import { JourneyMap } from './JourneyMap'
 import { Joystick } from './Joystick'
 import { PhotoCaption } from './PhotoCaption'
 
-const PLAYING = new Set(['explore', 'viewing', 'sitting', 'screen', 'cake', 'celebration', 'letter'])
+const PLAYING = new Set(['explore', 'viewing', 'sitting', 'screen', 'cake', 'ticket', 'cinema', 'arcade', 'note', 'letter', 'wishtree'])
 
 export function Hud() {
   useKeyboard()
   const phase = useStore((s) => s.phase)
-  const photos = useStore((s) => s.photos)
-  const seen = useStore((s) => s.seen)
+  const room = useStore((s) => s.room())
+  const rooms = useStore((s) => s.rooms)
+  const progress = useStore((s) => s.progress)
   const musicOk = useStore((s) => s.musicOk)
   const muted = useStore((s) => s.muted)
   const toggleMute = useStore((s) => s.toggleMute)
@@ -21,28 +24,41 @@ export function Hud() {
   const dismissHint = useStore((s) => s.dismissHint)
   const finishIntro = useStore((s) => s.finishIntro)
   const exit = useStore((s) => s.exitInteraction)
+  const showHint = useStore((s) => s.showHint)
+  const busy = useStore((s) => !!s.transition)
 
-  // the control hint fades on its own after a while
   useEffect(() => {
     if (!hintVisible) return
     const id = window.setTimeout(dismissHint, 12000)
     return () => window.clearTimeout(id)
   }, [hintVisible, dismissHint])
 
-  const playing = PLAYING.has(phase)
-  const seenCount = Object.keys(seen).length
+  const playing = PLAYING.has(phase) && !busy
+  const totalStars = starRooms(rooms).length
   const hints = isTouch() ? content.hints.mobile : content.hints.desktop
+  const hallTotal = room?.hall?.photos.length ?? 0
+  const starMissing = !!room?.layout.star && !progress.stars.includes(room.id)
 
   return (
     <>
       {playing && (
         <div className="hud-top">
-          <div className="chip">{content.hudChip}</div>
+          <JourneyMap />
           <div className="hud-right">
-            {(phase === 'explore' || phase === 'viewing' || phase === 'sitting') && (
-              <div className="chip memories" aria-label={`${content.memories} ${seenCount} of ${photos.length}`}>
-                {content.memories} {seenCount}/{photos.length} ♡
+            {room?.kind === 'hall' && (
+              <div className="chip" aria-label={`${content.journey.memories} ${hallSeen(room, progress)} of ${hallTotal}`}>
+                📷 {hallSeen(room, progress)}/{hallTotal}
               </div>
+            )}
+            {totalStars > 0 && (
+              <div className="chip" aria-label={`Stars ${progress.stars.length} of ${totalStars}`}>
+                ⭐ {progress.stars.length}/{totalStars}
+              </div>
+            )}
+            {starMissing && phase === 'explore' && (
+              <button className="chip icon-chip hint-chip" onClick={showHint} aria-label="Hint: where is the star?">
+                💡
+              </button>
             )}
             {musicOk && (
               <button className="chip icon-chip" onClick={toggleMute} aria-label={muted ? 'Unmute music' : 'Mute music'}>
@@ -59,12 +75,13 @@ export function Hud() {
         </button>
       )}
 
-      {phase === 'explore' && hintVisible && (
+      {phase === 'explore' && hintVisible && !busy && (
         <div className="hint-card" role="note">
           <ul>
             {hints.map((h) => (
               <li key={h}>{h}</li>
             ))}
+            <li>Find the hidden ⭐ in every room (💡 gives a hint)</li>
           </ul>
           <button className="pill-btn soft small" onClick={dismissHint}>
             {content.hints.gotIt}
@@ -80,9 +97,9 @@ export function Hud() {
         </div>
       )}
 
-      <ActionButton />
+      {!busy && <ActionButton />}
       <PhotoCaption />
-      <Joystick />
+      {!busy && <Joystick />}
     </>
   )
 }

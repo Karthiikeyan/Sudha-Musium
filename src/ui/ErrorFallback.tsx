@@ -49,3 +49,47 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, BoundarySt
     return <div key={this.state.key} style={{ display: 'contents' }}>{this.props.children}</div>
   }
 }
+
+/**
+ * Wraps the 3D canvas: if something inside a room throws, offer to skip that room or go back to the lobby
+ * instead of a dead end. (The outer ErrorBoundary still catches everything else.)
+ */
+export class RoomBoundary extends Component<{ children: ReactNode; onReset: () => void; onSkip: () => void; onLobby: () => void }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('[museum] a room crashed:', error, info.componentStack)
+  }
+
+  private recover(fn: () => void) {
+    try {
+      fn()
+    } catch {
+      /* ignore */
+    }
+    this.setState({ failed: false })
+    this.props.onReset()
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children
+    return (
+      <div className="fallback room-error" role="alert">
+        <h1>This room had a little hiccup 🙈</h1>
+        <p>No worries, the rest of the museum is fine.</p>
+        <div className="banner-actions static">
+          <button className="pill-btn pink big" onClick={() => this.recover(this.props.onSkip)}>
+            Skip to the next room
+          </button>
+          <button className="pill-btn glass big" onClick={() => this.recover(this.props.onLobby)}>
+            Back to the lobby
+          </button>
+        </div>
+      </div>
+    )
+  }
+}

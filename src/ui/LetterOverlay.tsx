@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { content } from '../config/content'
+import { sfx } from '../lib/audio'
 import { useStore } from '../state/store'
 
 interface CardProps {
@@ -42,22 +43,66 @@ export function LetterCard({ onClose, onReplay, inline }: CardProps) {
   )
 }
 
+/** The big wax-sealed envelope in the Post Office: tap the seal, it cracks, the main letter unfolds. */
 export function LetterOverlay() {
   const phase = useStore((s) => s.phase)
-  const close = useStore((s) => s.keepExploring)
-  const replay = useStore((s) => s.replay)
+  const readMain = useStore((s) => s.readMainLetter)
+  const setPhase = useStore((s) => s.setPhase)
+  const [stage, setStage] = useState<'sealed' | 'breaking' | 'open'>('sealed')
+  const open = phase === 'letter'
+
   useEffect(() => {
-    if (phase !== 'letter') return
+    if (!open) setStage('sealed')
+  }, [open])
+
+  useEffect(() => {
+    if (stage !== 'breaking') return
+    const id = window.setTimeout(() => setStage('open'), 900)
+    return () => window.clearTimeout(id)
+  }, [stage])
+
+  useEffect(() => {
+    if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close()
+      if (e.key !== 'Escape') return
+      if (stage === 'open') readMain()
+      else setPhase('explore')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, close])
-  if (phase !== 'letter') return null
+  }, [open, stage, readMain, setPhase])
+
+  if (!open) return null
   return (
     <div className="letter-backdrop">
-      <LetterCard onClose={close} onReplay={replay} />
+      {stage === 'open' ? (
+        <LetterCard onClose={readMain} />
+      ) : (
+        <div className={'envelope ' + stage}>
+          <div className="env-flap" />
+          <div className="env-body">
+            <div className="env-to">To Sudha</div>
+          </div>
+          <button
+            className="wax-seal"
+            onClick={() => {
+              if (stage !== 'sealed') return
+              sfx('page')
+              setStage('breaking')
+            }}
+            aria-label={content.sealed.tapToBreak}
+            autoFocus
+          >
+            <span className="half l" />
+            <span className="half r" />
+            <span className="seal-text">{content.sealed.seal}</span>
+          </button>
+          <div className="env-hint">{content.sealed.tapToBreak}</div>
+          <button className="pill-btn soft env-close" onClick={() => setPhase('explore')}>
+            {content.notes.close}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

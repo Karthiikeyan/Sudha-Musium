@@ -5,8 +5,9 @@ import { content } from '../config/content'
 import { damp } from '../lib/math'
 import { radialTexture, ribbonTexture, textSpriteTexture } from '../lib/textures'
 import { useStore } from '../state/store'
-import type { Layout } from './layout'
-import { Plinth } from './Plinth'
+import { BlobShadow } from './BlobShadow'
+import { useDisposable } from './hooks'
+import type { RoomLayout } from './layout'
 
 const CANDLE_COLORS = ['#f7c6d4', '#d9ccf2', '#fbe7a6', '#c9e7f2', '#ffd1b3']
 const PLINTH_H = 1.0
@@ -20,11 +21,13 @@ const easeOutElastic = (t: number) => {
 }
 
 /** Birthday cake on its own plinth. Pops in (with a bounce) once the quiz is finished; 5 flickering candles. */
-export function Cake({ layout }: { layout: Layout }) {
-  const unlocked = useStore((s) => s.cakeUnlocked)
+export function Cake({ layout }: { layout: RoomLayout }) {
   const request = useStore((s) => s.requestInteraction)
   const inter = layout.interactables.find((i) => i.id === 'cake')
-  const { x, z, stand } = layout.cake
+  const spot = layout.spots.cake ?? { x: 0, z: 0 }
+  const x = spot.x
+  const z = spot.z
+  const stand = inter?.stand ?? { x, z: z + 2.5 }
 
   const group = useRef<THREE.Group>(null)
   const ring = useRef<THREE.Mesh>(null)
@@ -69,8 +72,8 @@ export function Cake({ layout }: { layout: Layout }) {
     }),
     [],
   )
-  const ribbonMat = useMemo(() => new THREE.MeshBasicMaterial({ map: tex.ribbon, toneMapped: false, side: THREE.DoubleSide }), [tex])
-  const ringMat = useMemo(
+  const ribbonMat = useDisposable(() => new THREE.MeshBasicMaterial({ map: tex.ribbon, toneMapped: false, side: THREE.DoubleSide }), [tex])
+  const ringMat = useDisposable(
     () => new THREE.MeshBasicMaterial({ color: '#ff9fb4', transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }),
     [],
   )
@@ -82,13 +85,7 @@ export function Cake({ layout }: { layout: Layout }) {
     const st = useStore.getState()
     const g = group.current
     if (!g) return
-    if (st.cakeUnlocked) S.pop = Math.min(1, S.pop + dt / 1.1)
-    else {
-      S.pop = 0
-      S.flame = 1
-      S.smokeT = -1
-      S.wasOut = false
-    }
+    S.pop = Math.min(1, S.pop + dt / 1.1)
     const sc = easeOutElastic(S.pop)
     g.visible = S.pop > 0
     g.scale.setScalar(Math.max(0.0001, sc))
@@ -133,7 +130,7 @@ export function Cake({ layout }: { layout: Layout }) {
     if (label.current) label.current.position.y = BASE_Y + 1.35 + Math.sin(t * 1.8) * 0.05
 
     if (ring.current) {
-      const showRing = st.cakeUnlocked && !out && st.phase === 'explore'
+      const showRing = !out && st.phase === 'explore'
       ring.current.visible = showRing
       if (showRing) {
         const p = 1 + Math.sin(t * 3.2) * 0.08
@@ -160,7 +157,24 @@ export function Cake({ layout }: { layout: Layout }) {
         onPointerOver={() => (document.body.style.cursor = 'pointer')}
         onPointerOut={() => (document.body.style.cursor = '')}
       >
-        <Plinth x={0} z={0} w={1.5} d={1.5} h={PLINTH_H} />
+        {/* round table */}
+        <BlobShadow w={2.6} d={2.6} opacity={0.55} />
+        <mesh position={[0, PLINTH_H - 0.03, 0]}>
+          <cylinderGeometry args={[0.95, 0.95, 0.06, 36]} />
+          <meshStandardMaterial color="#f5efe6" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, PLINTH_H - 0.07, 0]}>
+          <cylinderGeometry args={[0.97, 0.97, 0.04, 36]} />
+          <meshStandardMaterial color="#f7c6d4" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, PLINTH_H / 2, 0]}>
+          <cylinderGeometry args={[0.09, 0.12, PLINTH_H, 12]} />
+          <meshStandardMaterial color="#c9a45c" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.03, 0]}>
+          <cylinderGeometry args={[0.45, 0.5, 0.06, 24]} />
+          <meshStandardMaterial color="#c9a45c" roughness={0.5} />
+        </mesh>
 
         {/* tiers */}
         <mesh position={[0, BASE_Y + 0.17, 0]}>

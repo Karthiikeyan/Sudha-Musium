@@ -5,7 +5,7 @@ import { useStore } from '../state/store'
 const MIN_MS = 2400
 
 export function LoadingScreen() {
-  const real = useStore((s) => s.progress)
+  const real = useStore((s) => s.loadProgress)
   const phase = useStore((s) => s.phase)
   const setPhase = useStore((s) => s.setPhase)
   const [shown, setShown] = useState(0)

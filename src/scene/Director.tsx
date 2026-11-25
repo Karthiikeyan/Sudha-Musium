@@ -3,7 +3,6 @@ import { content } from '../config/content'
 import { pick } from '../lib/math'
 import { nextScriptId, world, type Script } from '../lib/world'
 import { useStore, type Phase } from '../state/store'
-import type { Layout } from './layout'
 
 const mk = (s: Partial<Script> & { x: number; z: number }): Script => ({
   id: nextScriptId(),
@@ -15,61 +14,66 @@ const mk = (s: Partial<Script> & { x: number; z: number }): Script => ({
 })
 
 /**
- * Invisible conductor: whenever the phase changes it gives the two avatars their "scripts"
+ * Invisible conductor: whenever the phase or room changes it gives the two avatars their "scripts"
  * (where to stand, what pose to strike) and schedules the guide's lines. All timers are cleaned up.
  */
-export function Director({ layout }: { layout: Layout }) {
+export function Director() {
   const phase = useStore((s) => s.phase)
+  const roomId = useStore((s) => s.roomId)
   const viewIndex = useStore((s) => s.viewIndex)
   const benchIndex = useStore((s) => s.benchIndex)
   const restartKey = useStore((s) => s.restartKey)
   const prev = useRef<Phase>('loading')
-  const announced = useRef<Set<number>>(new Set())
-  const lastRestart = useRef(restartKey)
+  const announced = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    if (lastRestart.current !== restartKey) {
-      lastRestart.current = restartKey
-      announced.current.clear()
-    }
     const st = useStore.getState()
+    const room = st.room()
+    const L = world.layout
     const timers: number[] = []
+    const intervals: number[] = []
     const later = (ms: number, fn: () => void) => {
       timers.push(window.setTimeout(fn, ms))
     }
-    const P = world.player
-    const G = world.guide
     const before = prev.current
     prev.current = phase
-    const L = layout
+    if (!room || !L) return
+    const P = world.player
+    const say = (t: string) => useStore.getState().say('karthik', t)
 
     switch (phase) {
       case 'loading':
       case 'start':
       case 'intro': {
-        const gx = L.start.x - 1.6
-        const gz = L.start.z - 1.6
+        const s = L.spawn
+        const gx = s.x - 1.6
+        const gz = s.z - 1.6
         const teleport = phase !== 'intro'
-        world.scripts.guide = mk({ x: gx, z: gz, yaw: Math.atan2(L.start.x - gx, L.start.z - gz), pose: 'wave', teleport })
-        world.scripts.player = mk({ x: L.start.x, z: L.start.z, yaw: Math.atan2(gx - L.start.x, gz - L.start.z), pose: 'idle', teleport })
+        world.scripts.guide = mk({ x: gx, z: gz, yaw: Math.atan2(s.x - gx, s.z - gz), pose: 'wave', teleport })
+        world.scripts.player = mk({ x: s.x, z: s.z, yaw: Math.atan2(gx - s.x, gz - s.z), pose: 'idle', teleport })
         if (phase === 'intro') {
-          st.clearBubbles()
-          later(600, () => st.say('karthik', content.introBubbles[0]))
-          later(1800, () => content.introBubbles.slice(1).forEach((t) => st.say('karthik', t)))
+          later(600, () => say(content.introBubbles[0]))
+          later(1800, () => content.introBubbles.slice(1).forEach(say))
           later(5600, () => useStore.getState().finishIntro())
         }
         break
       }
       case 'explore': {
-        if (before === 'sitting') {
+        if (before === 'sitting' && L.benches.length) {
           const b = L.benches[st.benchIndex] ?? L.benches[0]
-          world.scripts.player = mk({ x: b.approach[0].x, z: b.approach[0].z, yaw: b.yaw, pose: 'idle' })
-          world.scripts.guide = mk({ x: b.approach[1].x, z: b.approach[1].z, yaw: b.yaw, pose: 'idle' })
+          world.scripts.player = mk({ x: b.approach[0].x, z: b.approach[0].z, yaw: b.yaw })
+          world.scripts.guide = mk({ x: b.approach[1].x, z: b.approach[1].z, yaw: b.yaw })
           later(1000, () => {
-            if (useStore.getState().phase === 'explore') {
-              world.scripts.player = null
-              world.scripts.guide = null
-            }
+            world.scripts.player = null
+            world.scripts.guide = null
+          })
+        } else if (before === 'cinema' && room.kind === 'cinema') {
+          const sp = L.spots
+          world.scripts.player = mk({ waypoints: [sp.gapP, sp.aisleP], x: sp.backP.x, z: sp.backP.z, yaw: Math.PI, speed: 3.6 })
+          world.scripts.guide = mk({ waypoints: [sp.gapG, sp.aisleG], x: sp.backG.x, z: sp.backG.z, yaw: Math.PI, speed: 3.6 })
+          later(3200, () => {
+            world.scripts.player = null
+            world.scripts.guide = null
           })
         } else {
           world.scripts.player = null
@@ -79,76 +83,86 @@ export function Director({ layout }: { layout: Layout }) {
       }
       case 'viewing': {
         const f = L.frames[viewIndex] ?? L.frames[0]
-        const far = Math.hypot(P.x - f.stand.x, P.z - f.stand.z) > 6
-        world.scripts.player = mk({ x: f.stand.x, z: f.stand.z, yaw: f.standYaw, pose: 'idle', teleport: far })
-        world.scripts.guide = mk({ x: f.guideStand.x, z: f.guideStand.z, yaw: f.standYaw, pose: 'idle', teleport: far })
-        if (!announced.current.has(viewIndex)) {
-          announced.current.add(viewIndex)
-          const line = st.photos[viewIndex]?.guideLine
-          if (line) later(600, () => useStore.getState().say('karthik', line))
+        if (!f) break
+        const far = Math.hypot(P.x - f.stand.x, P.z - f.stand.z) > 5
+        world.scripts.player = mk({ x: f.stand.x, z: f.stand.z, yaw: f.standYaw, teleport: far })
+        world.scripts.guide = mk({ x: f.guideStand.x, z: f.guideStand.z, yaw: f.standYaw, teleport: far })
+        const key = room.id + ':' + f.name
+        if (!announced.current.has(key)) {
+          announced.current.add(key)
+          const line = st.photoInfo(f.name).guideLine
+          if (line) later(600, () => say(line))
         }
         break
       }
       case 'sitting': {
         const b = L.benches[benchIndex] ?? L.benches[0]
-        world.scripts.player = mk({
-          waypoints: [b.ends[0], b.approach[0]],
-          x: b.slots[0].x,
-          z: b.slots[0].z,
-          yaw: b.yaw,
-          y: 0.08,
-          pose: 'sit',
-          speed: 3.6,
-        })
-        world.scripts.guide = mk({
-          waypoints: [b.ends[1], b.approach[1]],
-          x: b.slots[1].x,
-          z: b.slots[1].z,
-          yaw: b.yaw,
-          y: 0.08,
-          pose: 'sit',
-          speed: 3.6,
-        })
-        later(3200, () => useStore.getState().say('karthik', pick(content.benchLines)))
+        if (!b) break
+        world.scripts.player = mk({ waypoints: [b.ends[0], b.approach[0]], x: b.slots[0].x, z: b.slots[0].z, yaw: b.yaw, y: 0.08, pose: 'sit', speed: 3.6 })
+        world.scripts.guide = mk({ waypoints: [b.ends[1], b.approach[1]], x: b.slots[1].x, z: b.slots[1].z, yaw: b.yaw, y: 0.08, pose: 'sit', speed: 3.6 })
+        later(3000, () => say(pick(content.benchLines)))
         later(5200, () => useStore.getState().say('sudha', pick(content.sudhaLines)))
         break
       }
       case 'screen': {
-        const s = L.screen.stand
-        world.scripts.player = mk({ x: s.x, z: s.z, yaw: Math.PI, pose: 'idle' })
-        world.scripts.guide = mk({ x: s.x + 2.3, z: s.z + 0.4, yaw: Math.PI, pose: 'idle' })
+        const s = L.spots.screen
+        const g = L.spots.screenG
+        if (s) world.scripts.player = mk({ x: s.x, z: s.z, yaw: Math.PI })
+        if (g) world.scripts.guide = mk({ x: g.x, z: g.z, yaw: Math.PI })
+        break
+      }
+      case 'cinema': {
+        const sp = L.spots
+        if (!sp.seatP) break
+        world.scripts.player = mk({ waypoints: [sp.backP, sp.aisleP, sp.gapP], x: sp.seatP.x, z: sp.seatP.z, yaw: Math.PI, y: 0.08, pose: 'sit', speed: 3.8 })
+        world.scripts.guide = mk({ waypoints: [sp.backG, sp.aisleG, sp.gapG], x: sp.seatG.x, z: sp.seatG.z, yaw: Math.PI, y: 0.08, pose: 'sit', speed: 3.8 })
+        const id = window.setInterval(() => {
+          const s2 = useStore.getState()
+          if (s2.phase !== 'cinema') return
+          if (world.player.arrived && world.guide.arrived && s2.cinemaStage === 'seating') {
+            s2.setCinemaStage(s2.progress.cinemaDone ? 'ready' : 'ready')
+            window.clearInterval(id)
+          }
+        }, 200)
+        intervals.push(id)
         break
       }
       case 'cake': {
-        const c = L.cake
-        world.scripts.player = mk({ x: c.x - 1.3, z: c.z + 2.4, yaw: Math.PI, pose: 'idle' })
-        world.scripts.guide = mk({ x: c.x + 1.3, z: c.z + 2.4, yaw: Math.PI, pose: 'idle' })
+        const sp = L.spots
+        if (sp.cakeP) world.scripts.player = mk({ x: sp.cakeP.x, z: sp.cakeP.z, yaw: Math.PI })
+        if (sp.cakeG) world.scripts.guide = mk({ x: sp.cakeG.x, z: sp.cakeG.z, yaw: Math.PI })
         break
       }
       case 'celebration': {
-        const c = L.cake
+        const c = L.spots.cake ?? { x: 0, z: 0 }
         const z = c.z + 3.2
-        // narrow (portrait) screens see less sideways, so they dance a little closer together
         const portrait = window.innerWidth / Math.max(1, window.innerHeight) < 0.8
         world.scripts.player = mk({ x: c.x - (portrait ? 1.1 : 0.9), z, yaw: 0, pose: 'dance' })
         world.scripts.guide = mk({ x: c.x + (portrait ? 1.2 : 2.4), z, yaw: 0, pose: 'dance' })
         later(4000, () => {
           world.scripts.player = mk({ x: c.x - 0.45, z, yaw: 0, pose: 'hug', hugSide: 1 })
           world.scripts.guide = mk({ x: c.x + 0.45, z, yaw: 0, pose: 'hug', hugSide: -1 })
-          useStore.getState().say('karthik', content.finale.hugLine)
+          say(content.finale.hugLine)
         })
-        later(9500, () => {
-          world.scripts.player = mk({ x: c.x - 0.45, z, yaw: 0, pose: 'idle' })
-          world.scripts.guide = mk({ x: c.x + 0.45, z, yaw: 0, pose: 'wave' })
-        })
+        later(9000, () => useStore.getState().showFinale())
         break
       }
-      case 'letter':
+      case 'finale': {
+        const c = L.spots.cake ?? { x: 0, z: 0 }
+        const z = c.z + 3.2
+        world.scripts.player = mk({ x: c.x - 0.45, z, yaw: 0, pose: 'idle' })
+        world.scripts.guide = mk({ x: c.x + 0.45, z, yaw: 0, pose: 'wave' })
+        break
+      }
       default:
+        // overlays (ticket, arcade, notes, letter, wish tree): avatars simply wait where they are
         break
     }
-    return () => timers.forEach((t) => window.clearTimeout(t))
-  }, [phase, viewIndex, benchIndex, restartKey, layout])
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t))
+      intervals.forEach((t) => window.clearInterval(t))
+    }
+  }, [phase, roomId, viewIndex, benchIndex, restartKey])
 
   return null
 }

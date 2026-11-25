@@ -2,7 +2,8 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mulberry32, smoothstep } from '../lib/math'
-import type { Layout } from './layout'
+import { useDisposable } from './hooks'
+import type { RoomLayout } from './layout'
 
 const PASTELS = ['#f7c6d4', '#d9ccf2', '#fbe7a6', '#ffffff', '#c9e7f2']
 
@@ -47,21 +48,21 @@ interface Item {
   scale: number
 }
 
-function Group({ layout, kind, count, seed }: { layout: Layout; kind: 'heart' | 'star'; count: number; seed: number }) {
+function Group({ layout, kind, count, seed, top }: { layout: RoomLayout; kind: 'heart' | 'star'; count: number; seed: number; top: number }) {
   const ref = useRef<THREE.InstancedMesh>(null)
-  const geo = useMemo(() => (kind === 'heart' ? heartGeometry() : starGeometry()), [kind])
+  const geo = useDisposable(() => (kind === 'heart' ? heartGeometry() : starGeometry()), [kind])
   const items = useMemo<Item[]>(() => {
     const r = mulberry32(seed)
     return Array.from({ length: count }, () => ({
-      x: (r() * 2 - 1) * (layout.halfW - 1.2),
-      y: layout.ceiling - 0.7 - r() * 1.7,
-      z: layout.zN + 1 + r() * (layout.zS - layout.zN - 2),
+      x: (r() * 2 - 1) * (layout.w / 2 - 0.8),
+      y: top - r() * 1.4,
+      z: -layout.d / 2 + 0.8 + r() * (layout.d - 1.6),
       phase: r() * Math.PI * 2,
       speed: 0.25 + r() * 0.35,
       spin: 0.3 + r() * 0.6,
       scale: 0.55 + r() * 0.7,
     }))
-  }, [layout, count, seed])
+  }, [layout, count, seed, top])
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const camera = useThree((st) => st.camera)
 
@@ -104,11 +105,11 @@ function Group({ layout, kind, count, seed }: { layout: Layout; kind: 'heart' | 
 }
 
 /** A few tiny hearts and sparkles drifting near the ceiling. Two instanced meshes, trivial cost. */
-export function Floaters({ layout }: { layout: Layout }) {
+export function Floaters({ layout, top = 4.4, hearts = 10, stars = 16 }: { layout: RoomLayout; top?: number; hearts?: number; stars?: number }) {
   return (
     <>
-      <Group layout={layout} kind="heart" count={16} seed={11} />
-      <Group layout={layout} kind="star" count={26} seed={29} />
+      {hearts > 0 && <Group layout={layout} kind="heart" count={hearts} seed={11} top={top} />}
+      {stars > 0 && <Group layout={layout} kind="star" count={stars} seed={29} top={top} />}
     </>
   )
 }
