@@ -24,6 +24,7 @@ import { ScreenQuiz } from './ui/ScreenQuiz'
 import { StartScreen } from './ui/StartScreen'
 import { TicketOverlay } from './ui/TicketOverlay'
 import { WishOverlay } from './ui/WishOverlay'
+import { WishTreeOverlay } from './ui/WishTreeOverlay'
 
 function readParams() {
   try {
@@ -112,6 +113,7 @@ export default function App() {
       <CinemaOverlay />
       <FriendQuiz />
       <NoteOverlay />
+      <WishTreeOverlay />
       <ScreenQuiz />
       <WishOverlay />
       <FinalBanner />

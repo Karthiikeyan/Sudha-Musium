@@ -70,3 +70,36 @@ export function bigCelebration(): () => void {
     }
   }
 }
+
+/** Firework-style confetti bursts at random spots in the sky for ~6 s. Returns a cancel function. */
+export function fireworksBurst(): () => void {
+  if (prefersReducedMotion()) return () => undefined
+  const n = isTouch() ? 30 : 60
+  let count = 0
+  const fire = () => {
+    try {
+      void confetti({
+        particleCount: n,
+        spread: 360,
+        startVelocity: 26,
+        ticks: 120,
+        gravity: 0.7,
+        scalar: 0.9,
+        origin: { x: 0.15 + Math.random() * 0.7, y: 0.1 + Math.random() * 0.3 },
+        colors: COLORS,
+        disableForReducedMotion: true,
+      })
+    } catch {
+      /* ignore */
+    }
+    count++
+  }
+  const id = window.setInterval(() => {
+    if (count >= 9) {
+      window.clearInterval(id)
+      return
+    }
+    fire()
+  }, 650)
+  return () => window.clearInterval(id)
+}

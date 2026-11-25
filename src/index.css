@@ -1674,3 +1674,33 @@ button:focus-visible {
 .note-body {
   font-style: italic;
 }
+
+/* ───────────── wish tree ───────────── */
+.wish-card {
+  width: min(440px, 100%);
+}
+.wish-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(150, 120, 70, 0.35);
+  background: #fffaf0;
+  font: 500 17px var(--serif);
+  color: var(--paper-ink);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.wish-input:focus {
+  outline: 3px solid var(--butter);
+}
+.wish-count {
+  text-align: right;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+.wish-private {
+  font-size: 13px !important;
+  opacity: 0.7;
+}
