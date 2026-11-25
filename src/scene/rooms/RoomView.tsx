@@ -5,6 +5,7 @@ import { Star } from '../Star'
 import { CinemaRoom } from './CinemaRoom'
 import { HallRoom } from './HallRoom'
 import { LobbyRoom } from './LobbyRoom'
+import { LoungeRoom } from './LoungeRoom'
 
 /** Placeholder room used while a room kind is being built. */
 function BasicRoom({ room }: { room: RoomDef }) {
@@ -26,6 +27,8 @@ export function RoomView({ room }: { room: RoomDef }) {
       return <LobbyRoom room={room} />
     case 'cinema':
       return <CinemaRoom room={room} />
+    case 'lounge':
+      return <LoungeRoom room={room} />
     case 'hall':
       return <HallRoom room={room} />
     default:

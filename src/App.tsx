@@ -14,6 +14,7 @@ import { CinemaOverlay } from './ui/CinemaOverlay'
 import { DevPanel } from './ui/DevPanel'
 import { ErrorFallback, RoomBoundary } from './ui/ErrorFallback'
 import { FinalBanner } from './ui/FinalBanner'
+import { FriendQuiz } from './ui/FriendQuiz'
 import { Hud } from './ui/Hud'
 import { LetterOverlay } from './ui/LetterOverlay'
 import { LoadingScreen } from './ui/LoadingScreen'
@@ -108,6 +109,7 @@ export default function App() {
       <Hud />
       <TicketOverlay />
       <CinemaOverlay />
+      <FriendQuiz />
       <ScreenQuiz />
       <WishOverlay />
       <FinalBanner />
