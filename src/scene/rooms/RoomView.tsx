@@ -3,6 +3,7 @@ import { Door } from '../Door'
 import { RoomShell } from '../RoomShell'
 import { Star } from '../Star'
 import { HallRoom } from './HallRoom'
+import { LobbyRoom } from './LobbyRoom'
 
 /** Placeholder room used while a room kind is being built. */
 function BasicRoom({ room }: { room: RoomDef }) {
@@ -20,6 +21,8 @@ function BasicRoom({ room }: { room: RoomDef }) {
 /** Only the current room is mounted; switching rooms unmounts (and disposes) the previous one. */
 export function RoomView({ room }: { room: RoomDef }) {
   switch (room.kind) {
+    case 'lobby':
+      return <LobbyRoom room={room} />
     case 'hall':
       return <HallRoom room={room} />
     default:

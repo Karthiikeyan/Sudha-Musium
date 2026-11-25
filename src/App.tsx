@@ -19,6 +19,7 @@ import { LoadingScreen } from './ui/LoadingScreen'
 import { RoomTransition } from './ui/RoomTransition'
 import { ScreenQuiz } from './ui/ScreenQuiz'
 import { StartScreen } from './ui/StartScreen'
+import { TicketOverlay } from './ui/TicketOverlay'
 import { WishOverlay } from './ui/WishOverlay'
 
 function readParams() {
@@ -104,6 +105,7 @@ export default function App() {
         </RoomBoundary>
       )}
       <Hud />
+      <TicketOverlay />
       <ScreenQuiz />
       <WishOverlay />
       <FinalBanner />
