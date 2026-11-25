@@ -9,7 +9,7 @@ export function DevPanel() {
   const roomId = useStore((s) => s.roomId)
   const jump = useStore((s) => s.devJump)
   const unlock = useStore((s) => s.devUnlockAll)
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [mem, setMem] = useState<GlInfo | null>(null)
 
   useEffect(() => {

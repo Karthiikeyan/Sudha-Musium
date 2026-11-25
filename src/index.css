@@ -1185,8 +1185,8 @@ button:focus-visible {
 .dev-panel {
   position: fixed;
   z-index: 95;
-  right: 8px;
-  bottom: calc(8px + var(--sab));
+  left: 4px;
+  top: 40%;
   max-width: 240px;
   padding: 8px;
   border-radius: 10px;
@@ -1215,7 +1215,7 @@ button:focus-visible {
   gap: 4px;
 }
 .dev-toggle {
-  align-self: flex-end;
+  align-self: flex-start;
 }
 
 /* ───────────── wax-sealed envelope ───────────── */
@@ -1537,4 +1537,46 @@ button:focus-visible {
     width: 44px;
     height: 96px;
   }
+}
+
+/* ───────────── cinema ───────────── */
+.subtitles {
+  position: fixed;
+  z-index: 23;
+  left: 0;
+  right: 0;
+  bottom: calc(96px + var(--sab));
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.subtitles span {
+  max-width: 640px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-family: var(--serif);
+  font-size: clamp(16px, 4.4vw, 21px);
+  text-align: center;
+}
+.cinema-actions {
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.cinema-actions > * {
+  pointer-events: auto;
+}
+.cinema-note {
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+}
+.play-btn {
+  min-width: 150px;
+  font-size: 18px;
 }

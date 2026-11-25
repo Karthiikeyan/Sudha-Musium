@@ -2,6 +2,7 @@ import type { RoomDef } from '../../journey/rooms'
 import { Door } from '../Door'
 import { RoomShell } from '../RoomShell'
 import { Star } from '../Star'
+import { CinemaRoom } from './CinemaRoom'
 import { HallRoom } from './HallRoom'
 import { LobbyRoom } from './LobbyRoom'
 
@@ -23,6 +24,8 @@ export function RoomView({ room }: { room: RoomDef }) {
   switch (room.kind) {
     case 'lobby':
       return <LobbyRoom room={room} />
+    case 'cinema':
+      return <CinemaRoom room={room} />
     case 'hall':
       return <HallRoom room={room} />
     default:

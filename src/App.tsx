@@ -10,6 +10,7 @@ import { hasWebGL } from './lib/webgl'
 import { world } from './lib/world'
 import { Museum } from './scene/Museum'
 import { useStore } from './state/store'
+import { CinemaOverlay } from './ui/CinemaOverlay'
 import { DevPanel } from './ui/DevPanel'
 import { ErrorFallback, RoomBoundary } from './ui/ErrorFallback'
 import { FinalBanner } from './ui/FinalBanner'
@@ -106,6 +107,7 @@ export default function App() {
       )}
       <Hud />
       <TicketOverlay />
+      <CinemaOverlay />
       <ScreenQuiz />
       <WishOverlay />
       <FinalBanner />
