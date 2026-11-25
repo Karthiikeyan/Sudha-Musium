@@ -109,12 +109,17 @@ function Scene() {
   )
 }
 
+/** Full-screen 2D overlays hide the scene completely, so the 3D loop can rest while they are open. */
+const COVERING = new Set(['ticket', 'arcade', 'note', 'letter', 'wishtree'])
+
 export function Museum({ onContextLost, onContextRestored }: Props) {
   const touch = isTouch()
+  const covered = useStore((s) => COVERING.has(s.phase) && !s.transition)
   return (
     <div className="canvas-wrap">
       <Canvas
         flat
+        frameloop={covered ? 'demand' : 'always'}
         dpr={touch ? [1, 1.5] : [1, 2]}
         gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
         camera={{ fov: 45, near: 0.1, far: 240, position: [0, 6, 12] }}

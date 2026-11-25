@@ -18,6 +18,7 @@ import { FriendQuiz } from './ui/FriendQuiz'
 import { Hud } from './ui/Hud'
 import { LetterOverlay } from './ui/LetterOverlay'
 import { LoadingScreen } from './ui/LoadingScreen'
+import { NoteOverlay } from './ui/NoteOverlay'
 import { RoomTransition } from './ui/RoomTransition'
 import { ScreenQuiz } from './ui/ScreenQuiz'
 import { StartScreen } from './ui/StartScreen'
@@ -110,6 +111,7 @@ export default function App() {
       <TicketOverlay />
       <CinemaOverlay />
       <FriendQuiz />
+      <NoteOverlay />
       <ScreenQuiz />
       <WishOverlay />
       <FinalBanner />
